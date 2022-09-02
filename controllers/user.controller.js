@@ -1,20 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const shortid = require("shortid");
+const getRandomUser = require("../utilities/getRandomUser");
+const parseJsonFromFs = require("../utilities/parseJsonFromFs");
 
 const userFilePath = path.join(__dirname, "..", "users.json");
-const getRandomUser = (users) => {
-  const randomNumber = Math.floor(Math.random() * users.length);
-  const randomUser = users[randomNumber];
-  if (!randomUser) {
-    getRandomUser(users);
-  } else {
-    return randomUser;
-  }
-};
-const parseJsonFromFs = (data) => {
-  return JSON.parse(data.toString());
-};
 module.exports.getARandomUser = (req, res) => {
   fs.readFile(userFilePath, (err, users) => {
     if (err) {
@@ -124,41 +114,45 @@ module.exports.updateUser = (req, res) => {
 };
 
 module.exports.bulkUpdate = (req, res) => {
-  fs.readFile(userFilePath, (err, data) => {
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        error: "Something Went wrong",
-      });
-    }
-    if (data) {
-      const results = [];
-      for (const singleUser of req.body) {
+  const results = [];
+  for (const bodyUser of req.body) {
+    fs.readFile(userFilePath, (err, data) => {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          error: "Something Went wrong",
+        });
+      }
+      if (data) {
         const users = parseJsonFromFs(data);
-        const updatedUser = users.find((user) => user.id === singleUser.id);
-        const updateParamsEntries = Object.entries(singleUser);
-        for (const entryArray of updateParamsEntries) {
-          const param = entryArray[0];
-          const value = entryArray[1];
-          updatedUser[param] = value;
+        const user = users.find((user) => user.id === bodyUser.id);
+        const updateParamsEntries = Object.entries(bodyUser);
+        for (const key of updateParamsEntries) {
+          const param = key[0];
+          const value = key[1];
+          user[param] = value;
         }
         const updatedUsers = users.map((user) => {
-          if (user.id === singleUser.id) {
-            user = updatedUser;
+          if (user.id === bodyUser.id) {
+            user = user;
           }
           return user;
         });
-        console.log(JSON.stringify(updatedUsers));
+        console.log(updatedUsers, JSON.stringify(updatedUsers));
         fs.writeFile(userFilePath, JSON.stringify(updatedUsers), (err) => {
           if (err) {
-            results.push("Update Failed");
-          } else {
-            results.push("Updated Successfully");
+            return res.status(400).json({
+              success: false,
+              error: "Something Went wrong",
+            });
           }
         });
       }
-      res.status(200).json(results);
-    }
+    });
+  }
+  res.status(200).json({
+    success: true,
+    message: "Updated Successfully"
   });
 };
 
@@ -174,7 +168,7 @@ module.exports.deleteUser = (req, res) => {
       const users = parseJsonFromFs(data);
       const usersAfterRemove = users.filter((user) => user.id !== req.body.id);
       fs.writeFile(userFilePath, JSON.stringify(usersAfterRemove), (err) => {
-        if(err) {
+        if (err) {
           return res.status(400).json({
             success: false,
             error: "Something Went wrong",
@@ -182,10 +176,10 @@ module.exports.deleteUser = (req, res) => {
         } else {
           res.status(200).json({
             success: true,
-            message: "User deleted successfully"
-          })
+            message: "User deleted successfully",
+          });
         }
-      })
+      });
     }
   });
 };

@@ -10,19 +10,18 @@ const {
 const {
   validateSaveUserRequest,
   isRequestValidated,
-  validateUpdateUserRequest,
-} = require("../validators/user.validators");
+  validateUserId,
+} = require("../middlewares/validators/user.validators");
 
 router.get("/random", getARandomUser);
 router.get("/all", getAllUsers);
 router.post("/save", validateSaveUserRequest, isRequestValidated, saveAUser);
 router.patch(
   "/update",
-  validateUpdateUserRequest,
-  isRequestValidated,
+  validateUserId,
   updateUser
 );
 router.patch("/bulk-update", bulkUpdate);
-router.delete("/delete", deleteUser);
+router.delete("/delete", validateUserId, deleteUser);
 
 module.exports = router;
