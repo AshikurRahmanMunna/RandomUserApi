@@ -122,3 +122,70 @@ module.exports.updateUser = (req, res) => {
     }
   });
 };
+
+module.exports.bulkUpdate = (req, res) => {
+  fs.readFile(userFilePath, (err, data) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        error: "Something Went wrong",
+      });
+    }
+    if (data) {
+      const results = [];
+      for (const singleUser of req.body) {
+        const users = parseJsonFromFs(data);
+        const updatedUser = users.find((user) => user.id === singleUser.id);
+        const updateParamsEntries = Object.entries(singleUser);
+        for (const entryArray of updateParamsEntries) {
+          const param = entryArray[0];
+          const value = entryArray[1];
+          updatedUser[param] = value;
+        }
+        const updatedUsers = users.map((user) => {
+          if (user.id === singleUser.id) {
+            user = updatedUser;
+          }
+          return user;
+        });
+        console.log(JSON.stringify(updatedUsers));
+        fs.writeFile(userFilePath, JSON.stringify(updatedUsers), (err) => {
+          if (err) {
+            results.push("Update Failed");
+          } else {
+            results.push("Updated Successfully");
+          }
+        });
+      }
+      res.status(200).json(results);
+    }
+  });
+};
+
+module.exports.deleteUser = (req, res) => {
+  fs.readFile(userFilePath, (err, data) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        error: "Something Went wrong",
+      });
+    }
+    if (data) {
+      const users = parseJsonFromFs(data);
+      const usersAfterRemove = users.filter((user) => user.id !== req.body.id);
+      fs.writeFile(userFilePath, JSON.stringify(usersAfterRemove), (err) => {
+        if(err) {
+          return res.status(400).json({
+            success: false,
+            error: "Something Went wrong",
+          });
+        } else {
+          res.status(200).json({
+            success: true,
+            message: "User deleted successfully"
+          })
+        }
+      })
+    }
+  });
+};

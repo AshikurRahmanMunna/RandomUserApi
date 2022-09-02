@@ -7,6 +7,10 @@ exports.validateSaveUserRequest = [
   check("photoURL").notEmpty().withMessage("photoURL is required"),
 ];
 
+exports.validateUpdateUserRequest = [
+  check("id").notEmpty().withMessage("Id is required"),
+];
+
 exports.isRequestValidated = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.array().length > 0) {
