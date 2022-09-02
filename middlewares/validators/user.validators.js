@@ -28,12 +28,56 @@ exports.validateUserId = (req, res, next) => {
         if (userById) {
           next();
         } else {
-          return res
-            .status(400)
-            .json({ success: false, error: "No User Exists By This Id" });
+          return res.status(400).json({ error: "No User Exists By This Id" });
         }
       }
     });
+  }
+};
+
+exports.validateMultipleUserId = (req, res, next) => {
+  if (!req.body) {
+    return res.status(400).json({ error: "Body Required" });
+  } else {
+    if (!Array.isArray(req.body)) {
+      return res.status(400).json({ error: "Body Should Be an array" });
+    } else {
+      for (const singleDoc of req.body) {
+        if (!(typeof singleDoc === "object")) {
+          return res.status(400).json({
+            error: "Body will be an array of objects",
+          });
+        } else {
+          if (!singleDoc.id) {
+            return res.status(400).json({ error: "Id is required" });
+          } else if (!(Object.keys(singleDoc).length > 1)) {
+            return res.status(400).json({
+              error: "There should be one more field to update the user",
+            });
+          } else {
+            fs.readFile(userFilePath, (err, data) => {
+              if (err) {
+                return res.status(400).json({
+                  success: false,
+                  error: "Something went wrong",
+                });
+              }
+              if (data) {
+                const users = parseJsonFromFs(data);
+                const userById = users.find((user) => user.id === singleDoc.id);
+                if (userById) {
+                  next();
+                } else {
+                  return res.status(400).json({
+                    error: "No User Exists By This Id",
+                  });
+                }
+              }
+            });
+          }
+        }
+      }
+    }
   }
 };
 

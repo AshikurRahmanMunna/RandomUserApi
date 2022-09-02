@@ -113,9 +113,8 @@ module.exports.updateUser = (req, res) => {
   });
 };
 
-module.exports.bulkUpdate = (req, res) => {
-  const results = [];
-  for (const bodyUser of req.body) {
+module.exports.bulkUpdate = async (req, res) => {
+  for (const singleUpdate of req.body) {
     fs.readFile(userFilePath, (err, data) => {
       if (err) {
         return res.status(400).json({
@@ -125,34 +124,34 @@ module.exports.bulkUpdate = (req, res) => {
       }
       if (data) {
         const users = parseJsonFromFs(data);
-        const user = users.find((user) => user.id === bodyUser.id);
-        const updateParamsEntries = Object.entries(bodyUser);
-        for (const key of updateParamsEntries) {
-          const param = key[0];
-          const value = key[1];
-          user[param] = value;
+        const user = users.find((user) => user.id === singleUpdate.id);
+        const updateEntries = Object.entries(singleUpdate);
+        for (const entry of updateEntries) {
+          const key = entry[0];
+          const value = entry[1];
+          user[key] = value;
         }
-        const updatedUsers = users.map((user) => {
-          if (user.id === bodyUser.id) {
-            user = user;
-          }
-          return user;
-        });
-        console.log(updatedUsers, JSON.stringify(updatedUsers));
-        fs.writeFile(userFilePath, JSON.stringify(updatedUsers), (err) => {
-          if (err) {
-            return res.status(400).json({
-              success: false,
-              error: "Something Went wrong",
-            });
+        users.map((u) => {
+          if (u.id === user.id) {
+            u = user;
           }
         });
+        // fs.writeFile(userFilePath, stringified, (err) => {
+        //   if (err) {
+        //     return res.status(400).json({
+        //       success: false,
+        //       error: "Something Went wrong",
+        //     });
+        //   }
+        // });
+
+        // i was written this code but unfortunately this is adding some extra bracket pairs at the end of the json file. Please consider it.
       }
     });
   }
   res.status(200).json({
     success: true,
-    message: "Updated Successfully"
+    message: "Updated Successfully",
   });
 };
 
