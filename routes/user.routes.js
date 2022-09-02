@@ -11,6 +11,7 @@ const {
   validateSaveUserRequest,
   isRequestValidated,
   validateUserId,
+  validateMultipleUserId,
 } = require("../middlewares/validators/user.validators");
 
 router.get("/random", getARandomUser);
@@ -21,7 +22,7 @@ router.patch(
   validateUserId,
   updateUser
 );
-router.patch("/bulk-update", bulkUpdate);
+router.patch("/bulk-update", validateMultipleUserId, bulkUpdate);
 router.delete("/delete", validateUserId, deleteUser);
 
 module.exports = router;
